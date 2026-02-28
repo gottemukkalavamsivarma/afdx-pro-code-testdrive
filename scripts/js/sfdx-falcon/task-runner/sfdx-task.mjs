@@ -37,6 +37,7 @@ import { throwOnNullInvalidObject,
          throwOnInvalidFunction}          from "../validators/type-validator.mjs";
 import { isSfCliCommandString }           from "../utilities/sfdx.mjs";
 import { stdioToJson }                    from "../utilities/json.mjs";
+import { sleep }                          from "../utilities/general.mjs";
 
 // Set the File Local Debug Namespace
 const dbgNs = 'TaskRunner:SfdxTask';
@@ -134,6 +135,19 @@ export class SfdxTask {
    */
   concurrent = null;
   /**
+   * @type        {Object|null}
+   * @summary     Retry configuration for this `SfdxTask`.
+   * @description When provided, the task will retry its CLI command on failure.
+   *              Accepts an object with the following properties:
+   *              - `maxAttempts` {number} Total number of execution attempts (including the first).
+   *                Must be >= 1. Default: 1 (no retry).
+   *              - `delayMs` {number} Milliseconds to wait between retry attempts. Default: 5000.
+   *              - `retryIf` {function} Optional. Called with `(processError, ctx, task)` after each
+   *                failure. Must return `true` to allow retry or `false` to stop retrying immediately.
+   *                When omitted, all errors are eligible for retry.
+   */
+  retry = null;
+  /**
    * @summary     A `Listr` task constructed using the values passed to the `constructor`.
    */
   lisrTask = null;
@@ -179,6 +193,10 @@ export class SfdxTask {
     throwOnNullInvalidObject     (options,        `${localDbgNs}`, 'options', true);
     if (options.onSuccess) throwOnInvalidFunction(options.onSuccess,  `${localDbgNs}`, 'options.onSuccess');
     if (options.onError)   throwOnInvalidFunction(options.onError,    `${localDbgNs}`, 'options.onError');
+    if (options.retry) {
+      throwOnEmptyNullInvalidObject(options.retry, `${localDbgNs}`, 'options.retry');
+      if (options.retry.retryIf) throwOnInvalidFunction(options.retry.retryIf, `${localDbgNs}`, 'options.retry.retryIf');
+    }
     if (isSfCliCommandString(commandString) !== true) {
       throw new SfdxFalconError(`Invalid Command String: |-->${commandString}<--|   SfdxTask objects can only be constructed with 'sf' or 'sfdx' command strings. For other commands, please construct a CliTask object.`,
                                 `Invalid SFDX Command String`,
@@ -203,6 +221,15 @@ export class SfdxTask {
                                 : this.options.suppressErrors ? true : false;     // Coerce booleans: ensure "truthy" values become TRUE.
     this.renderStdioOnError   = this.options.renderStdioOnError ? true : false;   // Ensure "truthy" values become TRUE.
     this.concurrent           = this.options.concurrent ? true : false;           // Ensure "truthy" values become TRUE.
+    this.retry                = options.retry
+                                ? {
+                                    maxAttempts: Math.max(1, Math.floor(options.retry.maxAttempts ?? 1)),
+                                    delayMs:     Math.max(0, Math.floor(options.retry.delayMs ?? 5000)),
+                                    retryIf:     typeof options.retry.retryIf === 'function'
+                                                  ? options.retry.retryIf
+                                                  : null
+                                  }
+                                : null;
     this.lisrTask             = buildListrTask(this);
 
     // Debug member variables.
@@ -213,6 +240,7 @@ export class SfdxTask {
     SfdxFalconDebug.obj(`${localDbgNs}:this.onSuccess`,       this.onSuccess);
     SfdxFalconDebug.obj(`${localDbgNs}:this.onError`,         this.onError);
     SfdxFalconDebug.obj(`${localDbgNs}:this.suppressErrors`,  this.suppressErrors);
+    SfdxFalconDebug.obj(`${localDbgNs}:this.retry`,            this.retry);
     SfdxFalconDebug.obj(`${localDbgNs}:this.lisrTask`,        this.lisrTask);
   }
 }
@@ -238,79 +266,132 @@ function buildListrTask(sfdxTask) {
   const newListrTask = {
     title:        sfdxTask.title,
     concurrent:   sfdxTask.concurrent,
-    task: async (ctx, task) => { 
+    task: async (ctx, task) => {
       SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, sfdxTask.commandString, `About to Execute SFDX Command String:\n`);
 
-      // Use ZX to execute the Salesfoce CLI command.
-      try {
-        const processPromise = await $`${sfdxTask.commandString}`;
+      // Determine retry parameters. Default to a single attempt (no retry).
+      const maxAttempts = sfdxTask.retry?.maxAttempts ?? 1;
+      const delayMs     = sfdxTask.retry?.delayMs ?? 0;
+      const retryIf     = sfdxTask.retry?.retryIf ?? null;
+      const originalTitle = sfdxTask.title;
 
-        // Convert any JSON found in stdout/stderr buffers to actual objects.
-        processPromise.stderrJson = stdioToJson(processPromise.stderr);
-        processPromise.stdoutJson = stdioToJson(processPromise.stdout);
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        // Use ZX to execute the Salesforce CLI command.
+        try {
+          const processPromise = await $`${sfdxTask.commandString}`;
 
-        // Debug.
-        SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Salesforce CLI Command Execution Success`);
-        SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise, `processPromise:`);
-        SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise.stdoutJson, `STDOUT_JSON:`);
-        SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise.stderrJson, `STDERR_JSON:`);
-        SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, processPromise.stdout, `STDOUT:`);
-        SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, processPromise.stderr, `STDERR:`);
-
-        // Call success handler, if present.
-        if (typeof sfdxTask.onSuccess === 'function') {
-          await sfdxTask.onSuccess(processPromise, ctx, task);
-        }
-      } catch (processError) {
-        SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Salesforce CLI Command Execution Failure`);
-        SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError, `processError:`);
-
-        // Convert any JSON found in stdout/stderr buffers to actual objects.
-        // Done early so parsed JSON is available to onError and suppressErrors handlers.
-        processError.stderrJson = stdioToJson(processError.stderr);
-        processError.stdoutJson = stdioToJson(processError.stdout);
-
-        // Call error handler, if present.
-        if (typeof sfdxTask.onError === 'function') {
-          await sfdxTask.onError(processError, ctx, task);
-        }
-        // Determine whether to suppress this error.
-        // When suppressErrors is a function, call it with the error context to decide at runtime.
-        const shouldSuppress = typeof sfdxTask.suppressErrors === 'function'
-          ? sfdxTask.suppressErrors(processError, ctx, task)
-          : sfdxTask.suppressErrors;
-
-        // Throw error if errors are not suppressed for this task.
-        if (shouldSuppress === false) {
-          // Optionally render STDERR and STDOUT.
-          if (sfdxTask.renderStdioOnError === true) {
-            SfdxFalconDebug.debugMessage(`SfdxTask:ERROR`,    chalk.red(`Salesforce CLI command terminated with errors (Exit Code=${processError.exitCode}).`) +
-                                                              `\nThe command and the contents of STDERR and STDOUT are rendered below.`);
-            SfdxFalconDebug.debugString(`SfdxTask:COMMAND`,   sfdxTask.commandString);
-            if (isEmpty(processError.stderrJson)) {
-              SfdxFalconDebug.debugString(`SfdxTask:STDERR`,  processError.stderr);
-            } else {
-              SfdxFalconDebug.debugObject(`SfdxTask:STDERR`,  processError.stderrJson);
-            }
-            if (isEmpty(processError.stdoutJson)) {
-              SfdxFalconDebug.debugString(`SfdxTask:STDOUT`,  processError.stdout);
-            } else {
-              SfdxFalconDebug.debugObject(`SfdxTask:STDOUT`,  processError.stdoutJson);
-            }
-          }
+          // Convert any JSON found in stdout/stderr buffers to actual objects.
+          processPromise.stderrJson = stdioToJson(processPromise.stderr);
+          processPromise.stdoutJson = stdioToJson(processPromise.stdout);
 
           // Debug.
-          SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Errors are not suppressed for this SfdxTask`);
-          SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, `CommandString:\n${sfdxTask.commandString}`);
-          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stderr, `STDERR:`);
-          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stdout, `STDOUT:`);
-          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stderrJson, `STDERR_JSON:`);
-          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stdoutJson, `STDOUT_JSON:`);
+          SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Salesforce CLI Command Execution Success`);
+          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise, `processPromise:`);
+          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise.stdoutJson, `STDOUT_JSON:`);
+          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processPromise.stderrJson, `STDERR_JSON:`);
+          SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, processPromise.stdout, `STDOUT:`);
+          SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, processPromise.stderr, `STDERR:`);
 
-          throw new SfdxFalconError(`Salesforce CLI command execution failed.`,
-                                    `SFDX CLI Command Failed`,
-                                    `${localDbgNs}`,
-                                    processError);
+          // If this was a retry that succeeded, restore the original title.
+          if (attempt > 1) {
+            task.title = originalTitle;
+            SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Command succeeded on attempt ${attempt} of ${maxAttempts}`);
+          }
+
+          // Call success handler, if present.
+          if (typeof sfdxTask.onSuccess === 'function') {
+            await sfdxTask.onSuccess(processPromise, ctx, task);
+          }
+
+          // Success -- exit the retry loop.
+          return;
+
+        } catch (processError) {
+          SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Salesforce CLI Command Execution Failure (attempt ${attempt} of ${maxAttempts})`);
+          SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError, `processError:`);
+
+          // Convert any JSON found in stdout/stderr buffers to actual objects.
+          // Done early so parsed JSON is available to retryIf, onError, and suppressErrors handlers.
+          processError.stderrJson = stdioToJson(processError.stderr);
+          processError.stdoutJson = stdioToJson(processError.stdout);
+
+          // Determine if this error is eligible for retry.
+          const hasAttemptsRemaining = attempt < maxAttempts;
+          const isRetryEligible = hasAttemptsRemaining &&
+            (retryIf === null || retryIf(processError, ctx, task) === true);
+
+          if (isRetryEligible) {
+            // Log the retry decision and update the task title.
+            SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`,
+              `Retrying in ${delayMs}ms (attempt ${attempt} of ${maxAttempts} failed)`);
+            task.title = `${originalTitle} [retry ${attempt}/${maxAttempts - 1} in ${Math.round(delayMs / 1000)}s...]`;
+
+            // Wait before retrying.
+            await sleep(delayMs);
+
+            // Continue to the next iteration of the retry loop.
+            continue;
+          }
+
+          // All retries exhausted or retryIf returned false.
+          // Fall through to existing error handling.
+          if (attempt > 1) {
+            SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`,
+              `All ${maxAttempts} attempts exhausted. Proceeding to error handling.`);
+            task.title = `${originalTitle} [FAILED after ${attempt} attempts]`;
+          }
+
+          // Call error handler, if present.
+          if (typeof sfdxTask.onError === 'function') {
+            await sfdxTask.onError(processError, ctx, task);
+          }
+
+          // Determine whether to suppress this error.
+          // When suppressErrors is a function, call it with the error context to decide at runtime.
+          const shouldSuppress = typeof sfdxTask.suppressErrors === 'function'
+            ? sfdxTask.suppressErrors(processError, ctx, task)
+            : sfdxTask.suppressErrors;
+
+          // Throw error if errors are not suppressed for this task.
+          if (shouldSuppress === false) {
+            // Optionally render STDERR and STDOUT.
+            if (sfdxTask.renderStdioOnError === true) {
+              SfdxFalconDebug.debugMessage(`SfdxTask:ERROR`,    chalk.red(`Salesforce CLI command terminated with errors (Exit Code=${processError.exitCode}).`) +
+                                                                `\nThe command and the contents of STDERR and STDOUT are rendered below.`);
+              SfdxFalconDebug.debugString(`SfdxTask:COMMAND`,   sfdxTask.commandString);
+              if (isEmpty(processError.stderrJson)) {
+                SfdxFalconDebug.debugString(`SfdxTask:STDERR`,  processError.stderr);
+              } else {
+                SfdxFalconDebug.debugObject(`SfdxTask:STDERR`,  processError.stderrJson);
+              }
+              if (isEmpty(processError.stdoutJson)) {
+                SfdxFalconDebug.debugString(`SfdxTask:STDOUT`,  processError.stdout);
+              } else {
+                SfdxFalconDebug.debugObject(`SfdxTask:STDOUT`,  processError.stdoutJson);
+              }
+              // Render error.data if present (CLI sometimes wraps details here).
+              const errorData = processError.stdoutJson?.data ?? processError.stderrJson?.data;
+              if (!isEmpty(errorData)) {
+                SfdxFalconDebug.debugObject(`SfdxTask:ERROR_DATA`, errorData);
+              }
+            }
+
+            // Debug.
+            SfdxFalconDebug.msg(`ASYNC:${localDbgNs}`, `Errors are not suppressed for this SfdxTask`);
+            SfdxFalconDebug.str(`ASYNC:${localDbgNs}`, `CommandString:\n${sfdxTask.commandString}`);
+            SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stderr, `STDERR:`);
+            SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stdout, `STDOUT:`);
+            SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stderrJson, `STDERR_JSON:`);
+            SfdxFalconDebug.obj(`ASYNC:${localDbgNs}`, processError.stdoutJson, `STDOUT_JSON:`);
+
+            throw new SfdxFalconError(`Salesforce CLI command execution failed.`,
+                                      `SFDX CLI Command Failed`,
+                                      `${localDbgNs}`,
+                                      processError);
+          }
+
+          // Error was suppressed -- exit the retry loop.
+          return;
         }
       }
     }

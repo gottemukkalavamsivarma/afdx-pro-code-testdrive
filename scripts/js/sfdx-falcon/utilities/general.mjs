@@ -33,4 +33,21 @@ import { SfdxFalconDebug }  from "../debug/index.mjs";              // Internal 
 const dbgNs = 'UTILITY:general';
 SfdxFalconDebug.msg(`${dbgNs}`, `Debugging initialized for ${dbgNs}`);
 
-//TODO: Consider deleting this file if no general utilities are added.
+// ────────────────────────────────────────────────────────────────────────────────────────────────┐
+/**
+ * @function    sleep
+ * @param       {number} ms  Required. The number of milliseconds to sleep.
+ * @returns     {Promise<void>}  Resolves after the specified delay.
+ * @summary     Pauses execution for the specified number of milliseconds.
+ * @description Returns a Promise that resolves after the specified delay,
+ *              allowing `await sleep(ms)` to pause async execution inline.
+ * @public
+ * @example
+ * ```
+ * await sleep(5000); // Wait 5 seconds.
+ * ```
+ */
+// ────────────────────────────────────────────────────────────────────────────────────────────────┘
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

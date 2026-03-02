@@ -35,7 +35,8 @@ import { TaskRunner }           from './sfdx-falcon/task-runner/index.mjs';
 import { SfdxTask }             from './sfdx-falcon/task-runner/sfdx-task.mjs';
 import { SfdxFalconError }      from './sfdx-falcon/error/index.mjs';
 import { SfdxFalconDebug }      from './sfdx-falcon/debug/index.mjs';
-import { isDuplicatePermSetAssignment }
+import { isDuplicatePermSetAssignment,
+         isPermSetGroupNotUpdated }
                                 from './sfdx-falcon/utilities/sfdx.mjs';
 
 // Set the File Local Debug Namespace
@@ -132,7 +133,8 @@ export async function buildOrgEnv() {
   tr.addTask(new SfdxTask(
     `Assign "AFDX_User_Perms" to admin user`,
     `sf org assign permset -n AFDX_User_Perms`,
-    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true,
+      retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }}
   ));
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -142,7 +144,8 @@ export async function buildOrgEnv() {
   tr.addTask(new SfdxTask(
     `Assign "AFDX_Agent_Perms" to ${agentUsername}`,
     `sf org assign permset -n AFDX_Agent_Perms -b ${agentUsername}`,
-    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true,
+      retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }}
   ));
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘

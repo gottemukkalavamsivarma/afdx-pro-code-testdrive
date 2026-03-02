@@ -63,6 +63,17 @@ $.quote = (arg) => {
  */
 $.verbose = false;
 /**
+ * Fail fast if `--scratch-org` was specified but no default Dev Hub is configured.
+ */
+if (argv['scratch-org']) {
+  const devHubResult = await $`sf config get target-dev-hub --json`;
+  const devHubConfig = JSON.parse(devHubResult.stdout);
+  if (!devHubConfig.result?.[0]?.value) {
+    console.error(`\nError: A default Dev Hub is required to create a scratch org.\nSet one with:  sf config set target-dev-hub=<username|alias>\n`);
+    process.exit(1);
+  }
+}
+/**
  * Parsed JSON representation of `sfdx-project.json` in the directory
  * the setup script was run in.
  */

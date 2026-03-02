@@ -441,29 +441,25 @@ export function isDuplicatePermSetAssignment(processError) {
  *                                     Must have a `stdoutJson` property containing the parsed
  *                                     JSON response from the Salesforce CLI.
  * @returns     {boolean}  Returns `true` if the error indicates a Permission Set Group has not
- *                         yet reached "Updated" status (eligible for retry). Returns `false`
- *                         for all other errors.
- * @summary     Conditional `retryIf` handler for permission set assignment tasks.
+ *                         yet reached "Updated" status. Returns `false` for all other errors.
+ * @summary     Checks whether a CLI failure is caused by a Permission Set Group that has not
+ *              yet reached "Updated" status.
  * @description Inspects the parsed CLI response to determine if any failure message references
  *              a Permission Set Group that has not yet reached "Updated" status. This is a
- *              transient condition that resolves on its own after a post-deploy recalculation,
- *              making it a good candidate for retry.
+ *              transient condition that resolves on its own after a post-deploy recalculation.
  *
- *              Returns `true` (retry) ONLY when at least one failure's `message` contains
- *              the text "permission set groups that have the \"Updated\" status". Returns `false`
- *              for all other errors, preventing pointless retries of unrelated failures.
+ *              Returns `true` ONLY when at least one failure's `message` contains the text
+ *              "permission set groups that have the". Returns `false` for all other errors.
+ *
+ *              Follows the same pattern as {@link isDuplicatePermSetAssignment}: accepts a
+ *              `processError` object and returns a boolean. Callers decide how to act on the
+ *              result (e.g. suppress the error, retry the command, or surface it).
  * @public
  * @example
  * ```
- * const sfdxTask = new SfdxTask(
- *   `Assign admin permissions`,
- *   `sf org assign permset -n AFDX_User_Perms`,
- *   {
- *     suppressErrors: isDuplicatePermSetAssignment,
- *     renderStdioOnError: true,
- *     retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }
- *   }
- * );
+ * if (isPermSetGroupNotUpdated(processError)) {
+ *   // The PSG hasn't finished recalculating — handle accordingly.
+ * }
  * ```
  */
 // ────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -486,6 +482,8 @@ export function isPermSetGroupNotUpdated(processError) {
 
   // Check error.data — the CLI sometimes wraps multiple errors in a generic
   // "Multiple errors returned" failure and puts the actual messages in data.
+  // TEMPORARY: Awaiting CLI changes to surface multiple errors in the JSON output.
+  /*
   const errorData = processError?.stdoutJson?.data ?? processError?.stderrJson?.data;
   if (Array.isArray(errorData)) {
     if (errorData.some(d => hasMsg(d.message) || hasMsg(d))) return true;
@@ -494,7 +492,8 @@ export function isPermSetGroupNotUpdated(processError) {
   } else if (hasMsg(errorData)) {
     return true;
   }
+  //*/
 
-  // Not a PSG status error -- do not retry.
+  // Not a PSG status error.
   return false;
 }

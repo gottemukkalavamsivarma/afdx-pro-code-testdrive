@@ -434,3 +434,67 @@ export function isDuplicatePermSetAssignment(processError) {
     && f.message.includes('Duplicate PermissionSetAssignment')
   );
 }
+// ────────────────────────────────────────────────────────────────────────────────────────────────┐
+/**
+ * @function    isPermSetGroupNotUpdated
+ * @param       {Object} processError  The processError object from a failed CLI command.
+ *                                     Must have a `stdoutJson` property containing the parsed
+ *                                     JSON response from the Salesforce CLI.
+ * @returns     {boolean}  Returns `true` if the error indicates a Permission Set Group has not
+ *                         yet reached "Updated" status (eligible for retry). Returns `false`
+ *                         for all other errors.
+ * @summary     Conditional `retryIf` handler for permission set assignment tasks.
+ * @description Inspects the parsed CLI response to determine if any failure message references
+ *              a Permission Set Group that has not yet reached "Updated" status. This is a
+ *              transient condition that resolves on its own after a post-deploy recalculation,
+ *              making it a good candidate for retry.
+ *
+ *              Returns `true` (retry) ONLY when at least one failure's `message` contains
+ *              the text "permission set groups that have the \"Updated\" status". Returns `false`
+ *              for all other errors, preventing pointless retries of unrelated failures.
+ * @public
+ * @example
+ * ```
+ * const sfdxTask = new SfdxTask(
+ *   `Assign admin permissions`,
+ *   `sf org assign permset -n AFDX_User_Perms`,
+ *   {
+ *     suppressErrors: isDuplicatePermSetAssignment,
+ *     renderStdioOnError: true,
+ *     retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }
+ *   }
+ * );
+ * ```
+ */
+// ────────────────────────────────────────────────────────────────────────────────────────────────┘
+export function isPermSetGroupNotUpdated(processError) {
+  const notUpdatedMsg = 'permission set groups that have the';
+
+  // Helper: check if a string contains the PSG "not Updated" message.
+  const hasMsg = (s) => typeof s === 'string' && s.includes(notUpdatedMsg);
+
+  // Check the failures array in the structured CLI response.
+  const failures = processError?.stdoutJson?.result?.failures;
+  if (Array.isArray(failures) && failures.length > 0) {
+    if (failures.some(f => hasMsg(f.message))) return true;
+  }
+
+  // Check the top-level error message (some CLI versions surface it here).
+  if (hasMsg(processError?.stdoutJson?.message) || hasMsg(processError?.stderrJson?.message)) {
+    return true;
+  }
+
+  // Check error.data — the CLI sometimes wraps multiple errors in a generic
+  // "Multiple errors returned" failure and puts the actual messages in data.
+  const errorData = processError?.stdoutJson?.data ?? processError?.stderrJson?.data;
+  if (Array.isArray(errorData)) {
+    if (errorData.some(d => hasMsg(d.message) || hasMsg(d))) return true;
+  } else if (typeof errorData === 'object' && errorData !== null) {
+    if (hasMsg(errorData.message)) return true;
+  } else if (hasMsg(errorData)) {
+    return true;
+  }
+
+  // Not a PSG status error -- do not retry.
+  return false;
+}

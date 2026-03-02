@@ -1,13 +1,13 @@
-# AFDX Pro-Code Testdrive
+# Agentforce DX Pro-Code Testdrive
 
-A hands-on project for learning how to create next-gen Agentforce agents using **Agent Script** and **Agentforce DX**.
+Learn how to create next-gen Agentforce agents using **Agent Script** and **Agentforce DX** with this hands-on project.
 
-This project contains a pre-built agent for **Coral Cloud Resort** called the **Local Info Agent**. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
+This project contains a pre-built agent called **Local Info Agent** for the **Coral Cloud Resort** application. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
 
 ## Prerequisites
 
-- A **Salesforce Developer Edition (DE)** org *(free at [developer.salesforce.com/signup](https://developer.salesforce.com/signup))*
-- **Salesforce CLI** (`sf`) installed *(see [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli))*
+- **Salesforce Developer Edition (DE)** org. Get a free one at [developer.salesforce.com/signup](https://developer.salesforce.com/signup). 
+- **Salesforce CLI** (`sf`). Download and install it from [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli).  See the [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for more detailed information. 
 - **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension
 - **Node.js** (v20 or later) and NPM *(if the Salesforce CLI installed, you should have Node.js)*
 

@@ -2,14 +2,19 @@
 
 Use this hands-on project to learn how to create next-gen Agentforce agents using Agent Script and Agentforce DX.
 
-This project contains a pre-built agent called Local Info Agent for the Coral Cloud Resort application. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
+This project contains a pre-built agent called Local Info Agent for the Coral Cloud Resort application. The agent demonstrates:
+
+- Three types of agent actions (Invocable Apex, Prompt Template, and Flow)
+- Mutable variables
+- Flow control with `available when`
+- Deterministic branching with `if/else` in reasoning instructions
 
 ## Prerequisites
 
 - **Salesforce Developer Edition (DE)** org. Get a free one at [developer.salesforce.com/signup](https://developer.salesforce.com/signup). 
 - **Salesforce CLI** (`sf`). Download and install it from [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli).  See the [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for more detailed information. 
 - **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension. See [Install Pro-Code Tools](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-set-up-env.html) for details. 
-- **Node.js** (v20 or later) and NPM. If you install Salesforce CLI with the operating system installers, you already have Node.js.
+- **Node.js** (v20 or later) and NPM. If you installed Salesforce CLI with the operating system installers, you already have Node.js.
 
 ## Setup
 
@@ -31,7 +36,7 @@ This project contains a pre-built agent called Local Info Agent for the Coral Cl
 2. Open the `afdx-pro-code-testdrive` folder in VS Code.
 3. Open the integrated terminal in VS Code. *(From the top menu, select View > Terminal.)*
 
-> ⚠️  Run All CLI commands from the VS Code integrated terminal from this point forward.
+ ⚠️  Run All CLI commands from the VS Code integrated terminal from this point forward.
 
 ### STEP THREE: Connect to your org.
 
@@ -47,7 +52,7 @@ You can also use the VS Code **SFDX: Authorize an Org** command from the Command
 
 The setup script deploys source, assigns permissions, and creates a dedicated agent user. Agentforce agents run as a dedicated user with the **Einstein Agent User** profile — this user is the runtime identity for your agent.
 
-> ⚠️  If the setup script fails, follow the [Manual Setup](#manual-setup) instructions at the end of this README to continue.
+ ⚠️  If the setup script fails, follow the [Manual Setup](#manual-setup) instructions at the end of this README to continue.
 
 Run the setup script from the VS Code integrated terminal:
 
@@ -62,7 +67,7 @@ setup.cmd
 
 When the script finishes, note the username of the new agent user in the output. It appears in the task titled `Create agent user (afdx-agent-XXXXXXXX@testdrive.org)`. You need this username in the next step.
 
-> 💡 You can also find the new agent username in the `Username` field on line 9 of `data-import/User.json`.
+ 💡 You can also find the new agent username in the `Username` field on line 9 of `data-import/User.json`.
 
 ### STEP FIVE: Configure and deploy the agent.
 

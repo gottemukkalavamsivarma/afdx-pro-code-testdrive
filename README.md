@@ -2,7 +2,7 @@
 
 Use this hands-on project to learn how to create next-gen Agentforce agents using Agent Script and Agentforce DX.
 
-This project contains a pre-built agent called **Local Info Agent** for the **Coral Cloud Resort** application. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
+This project contains a pre-built agent called Local Info Agent for the Coral Cloud Resort application. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
 
 ## Prerequisites
 
@@ -29,9 +29,9 @@ This project contains a pre-built agent called **Local Info Agent** for the **Co
    git clone https://github.com/forcedotcom/afdx-pro-code-testdrive.git
    ```
 2. Open the `afdx-pro-code-testdrive` folder in VS Code.
-3. Open the integrated terminal in VS Code. *(Navigate to the top menu and select View > Terminal.)*
+3. Open the integrated terminal in VS Code. *(From the top menu, select View > Terminal.)*
 
-> ⚠️ Run All CLI commands from the VS Code integrated terminal from this point forward.
+> ⚠️  Run All CLI commands from the VS Code integrated terminal from this point forward.
 
 ### STEP THREE: Connect to your org.
 
@@ -62,12 +62,12 @@ setup.cmd
 
 When the script finishes, note the username of the new agent user in the output. It appears in the task titled `Create agent user (afdx-agent-XXXXXXXX@testdrive.org)`. You need this username in the next step.
 
-> 💡 The new agent username is also found in the `Username` field on line 9 of `data-import/User.json`.
+> 💡 You can also find the new agent username in the `Username` field on line 9 of `data-import/User.json`.
 
 ### STEP FIVE: Configure and deploy the agent.
 
 1. Open `force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent` in the VS Code editor.
-2. Replace the value on line 11 (`default_agent_user`) with the agent username from the previous step.
+2. Replace the temporary value of the `default_agent_user` option (line 11) with the agent username from the previous step.
 3. Deploy the updated agent from the VS Code integrated terminal by running this command:
    ```
    sf project deploy start -m AiAuthoringBundle:Local_Info_Agent

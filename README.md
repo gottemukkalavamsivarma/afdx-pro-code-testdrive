@@ -1,46 +1,58 @@
-# AFDX Pro-Code Testdrive
+# Agentforce DX Pro-Code Testdrive
 
-A hands-on project for learning how to create next-gen Agentforce agents using **Agent Script** and **Agentforce DX**.
+Use this hands-on project to learn how to create next-gen Agentforce agents using Agent Script and Agentforce DX.
 
-This project contains a pre-built agent for **Coral Cloud Resort** called the **Local Info Agent**. It demonstrates three types of agent actions (Invocable Apex, Prompt Template, and Flow), mutable variables, flow control with `available when`, and deterministic branching with `if/else` in reasoning instructions.
+This project contains a pre-built agent called Local Info Agent for the Coral Cloud Resort application. The agent demonstrates:
+
+- Three types of agent actions (Invocable Apex, Prompt Template, and Flow)
+- Mutable variables
+- Flow control with `available when`
+- Deterministic branching with `if/else` in reasoning instructions
 
 ## Prerequisites
 
-- A **Salesforce Developer Edition (DE)** org *(free at [developer.salesforce.com/signup](https://developer.salesforce.com/signup))*
-- **Salesforce CLI** (`sf`) installed *(see [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli))*
-- **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension
-- **Node.js** (v20 or later) and NPM *(if the Salesforce CLI installed, you should have Node.js)*
+- **Salesforce Developer Edition (DE)** org. Get a free one at [developer.salesforce.com/signup](https://developer.salesforce.com/signup). 
+- **Salesforce CLI** (`sf`). Download and install it from [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli).  See the [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for more detailed information. 
+- **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension. See [Install Pro-Code Tools](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-set-up-env.html) for details. 
+- **Node.js** (v20 or later) and NPM. If you installed Salesforce CLI with the operating system installers, you already have Node.js.
 
 ## Setup
 
-### STEP ONE: Prepare your Developer Edition org
-1. Sign up for a DE org at [developer.salesforce.com/signup](https://developer.salesforce.com/signup).
+### STEP ONE: Prepare your Developer Edition org. 
+
+1. If you haven't already, sign up for a DE org at [developer.salesforce.com/signup](https://developer.salesforce.com/signup).
 2. Enable the following features:
    - **Einstein** *(Setup > Einstein > Einstein Generative AI > Einstein Setup)*
      - Some orgs have Einstein enabled by default. If yours already shows Einstein as enabled, you can skip this step.
      - Reload your browser tab after enabling Einstein so Agentforce becomes available in your Setup tree.
    - **Agentforce** *(Setup > Einstein > Einstein Generative AI > Agentforce Studio > Agentforce Agents)*
 
-### STEP TWO: Clone and open in VS Code
+### STEP TWO: Clone this repo and open it in VS Code.
+
 1. Clone this repo.
    ```
    git clone https://github.com/forcedotcom/afdx-pro-code-testdrive.git
    ```
 2. Open the `afdx-pro-code-testdrive` folder in VS Code.
-3. Open the **integrated terminal** in VS Code. *(Navigate to the top menu and select View > Terminal)*
+3. Open the integrated terminal in VS Code. *(From the top menu, select View > Terminal.)*
 
-> ⚠️ Run All CLI commands from the VS Code integrated terminal from this point forward.
+ ⚠️  Run All CLI commands from the VS Code integrated terminal from this point forward.
 
-### STEP THREE: Connect to your org
-Authenticate the Salesforce CLI to your DE org.
+### STEP THREE: Connect to your org.
+
+Authorize your DE org for use with Salesforce CLI.
+
 ```
 sf org login web -s -a AFDX-Testdrive
 ```
 
-### STEP FOUR: Run the setup script
-The setup script deploys source, assigns permissions, and creates a dedicated **agent user**. Agentforce agents run as a dedicated user with the **Einstein Agent User** profile — this user is the runtime identity for your agent.
+You can also use the VS Code **SFDX: Authorize an Org** command from the Command Palette.
 
-> ⚠️ If the setup script fails, follow the **Manual Setup** instructions at the end of this readme to continue.
+### STEP FOUR: Run the setup script.
+
+The setup script deploys source, assigns permissions, and creates a dedicated agent user. Agentforce agents run as a dedicated user with the **Einstein Agent User** profile — this user is the runtime identity for your agent.
+
+ ⚠️  If the setup script fails, follow the [Manual Setup](#manual-setup) instructions at the end of this README to continue.
 
 Run the setup script from the VS Code integrated terminal:
 
@@ -48,26 +60,27 @@ Run the setup script from the VS Code integrated terminal:
 ```
 ./setup
 ```
-**Windows (Command Prompt):**
+**Windows:**
 ```
 setup.cmd
 ```
 
-When the script finishes, note the **agent username** in the output. It appears in the task titled `Create agent user (afdx-agent-XXXXXXXX@testdrive.org)`. You'll need this username in the next step.
+When the script finishes, note the username of the new agent user in the output. It appears in the task titled `Create agent user (afdx-agent-XXXXXXXX@testdrive.org)`. You need this username in the next step.
 
-> 💡 The agent username is also found in the `Username` field on line 9 of `data-import/User.json`.
+ 💡 You can also find the new agent username in the `Username` field on line 9 of `data-import/User.json`.
 
-### STEP FIVE: Configure and deploy the agent
-1. Open `force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent`.
-2. Replace the value on **line 11** (`default_agent_user`) with the agent username from the previous step.
-3. Deploy the updated agent from the VS Code integrated terminal:
+### STEP FIVE: Configure and deploy the agent.
+
+1. Open `force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent` in the VS Code editor.
+2. Replace the temporary value of the `default_agent_user` option (line 11) with the agent username from the previous step.
+3. Deploy the updated agent from the VS Code integrated terminal by running this command:
    ```
    sf project deploy start -m AiAuthoringBundle:Local_Info_Agent
    ```
 
-This is your first look at **Agent Script** — the file you just edited defines the entire agent (its topics, reasoning instructions, variables, and actions) in a single readable script.
+The `.agent` file you just edited uses the Agent Script language. This single readable script file defines the entire agent, such as its topics, reasoning instructions, variables, and actions.
 
-## What's Inside This Project
+## What's Inside This Project?
 
 | Component | Type | Purpose |
 |---|---|---|
@@ -91,13 +104,14 @@ Use the Agentforce DX panel in VS Code to start a conversation with the Local In
 3. Click the **Start Simulation** button. If you see **Start Live Test** instead, click the down-arrow and select **Simulation** first.
 
 ### Suggested Prompts
+
 Try these prompts to see each type of agent action in action:
 
-- *"What's the weather like today?"* — triggers an **Apex** action
-- *"I'm interested in movies. What's showing nearby?"* — triggers a **Prompt Template** action
-- *"When does the spa open?"* — triggers a **Flow** action
+- *"What's the weather like today?"* — triggers an Apex action.
+- *"I'm interested in movies. What's showing nearby?"* — triggers a Prompt Template action.
+- *"When does the spa open?"* — triggers a Flow action.
 
-Return to `Local_Info_Agent.agent` in the editor and inspect the `local_weather` topic. Notice the pirate-themed instruction at the end of the reasoning block. This single line controls how the agent responds — try changing it:
+Return to `Local_Info_Agent.agent` in the editor and inspect the `local_weather` topic. Notice the pirate-themed instruction at the end of the reasoning block (around line 117). This single line controls how the agent responds — try changing it:
 
 1. Remove the pirate instruction from the Agent Script.
 2. Right-click inside the agent and select **AFDX: Validate this Agent**
@@ -108,16 +122,19 @@ This demonstrates how Agent Script reasoning instructions directly control agent
 
 ## Manual Setup
 
-If the setup script fails (e.g. due to a firewall blocking npm), you can run the equivalent steps manually from the VS Code integrated terminal. Start from **STEP THREE** above, then continue with the steps below.
+The setup script can sometimes fail if, for example, a firewall is blocking `npm`. In which case, run the equivalent steps manually from the VS Code integrated terminal. After you complete **STEP THREE** above, run the steps in this section instead of **STEP FOUR**.
 
-**Deploy and assign permissions:**
+### Deploy and Assign Permission Sets
+
+Run these commands:
+
 ```
 sf org assign permset -n EinsteinGPTPromptTemplateManager -n EinsteinGPTPromptTemplateUser
 sf project deploy start --source-dir force-app
 sf org assign permset -n AFDX_User_Perms
 ```
 
-**Create the agent user:**
+### Create the Agent User
 
 Agentforce agents run as a dedicated user with the **Einstein Agent User** profile. Query for the profile ID, update `data-import/User.json` with the results, then import the user.
 

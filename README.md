@@ -14,7 +14,7 @@ This project contains a pre-built agent called Local Info Agent for the Coral Cl
 - **Salesforce Developer Edition (DE)** org. Get a free one at [developer.salesforce.com/signup](https://developer.salesforce.com/signup). 
 - **Salesforce CLI** (`sf`). Download and install it from [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli).  See the [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for more detailed information. 
 - **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension. See [Install Pro-Code Tools](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-set-up-env.html) for details. 
-- **Node.js** (v20 or later) and NPM. If you installed Salesforce CLI with the operating system installers, you already have Node.js.
+- **Node.js** (v20 or later) and NPM. 
 
 ## Setup
 

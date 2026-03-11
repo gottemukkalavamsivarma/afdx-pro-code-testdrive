@@ -114,8 +114,6 @@ topic local_weather:
 
               ALWAYS Provide forecasts that include a temperature range.
 
-              Finally, ALWAYS give answers like you're a pirate on the high seas, using pirate-themed language and expressions to make the interaction more engaging and fun for the user.
-
         actions:
             check_weather: @actions.check_weather
                 with dateToCheck = ...

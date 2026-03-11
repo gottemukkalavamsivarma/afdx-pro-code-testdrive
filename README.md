@@ -2,7 +2,9 @@
 
 Use this hands-on project to learn how to create next-gen Agentforce agents using Agent Script and Agentforce DX.
 
-This project contains a pre-built agent called Local Info Agent for the Coral Cloud Resort application. The agent demonstrates:
+This Salesforce DX project contains a pre-built agent called Local Info Agent that could be embedded in, for example, a resort's web site. The agent provides local weather updates, shares information about local events, and helps guests with facility hours. 
+
+The agent demonstrates:
 
 - Three types of agent actions (Invocable Apex, Prompt Template, and Flow)
 - Mutable variables
@@ -14,7 +16,7 @@ This project contains a pre-built agent called Local Info Agent for the Coral Cl
 - **Salesforce Developer Edition (DE)** org. Get a free one at [developer.salesforce.com/signup](https://developer.salesforce.com/signup). 
 - **Salesforce CLI** (`sf`). Download and install it from [developer.salesforce.com/tools/sfdxcli](https://developer.salesforce.com/tools/sfdxcli).  See the [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for more detailed information. 
 - **VS Code** with the **Salesforce Extensions** pack and the **Agentforce DX** extension. See [Install Pro-Code Tools](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-set-up-env.html) for details. 
-- **Node.js** (v20 or later) and NPM. If you installed Salesforce CLI with the operating system installers, you already have Node.js.
+- **Node.js** (v20 or later) and NPM. 
 
 ## Setup
 
@@ -87,11 +89,11 @@ The `.agent` file you just edited uses the Agent Script language. This single re
 | `Local_Info_Agent.agent` | Agent Script | The agent definition — topics, reasoning, variables, and flow control |
 | `CheckWeather` | Apex Class | Invocable Apex. Checks current weather conditions for a given location |
 | `CurrentDate` | Apex Class | Invocable Apex. Returns the current date for use by the agent |
-| `WeatherService` | Apex Class | Provides mock weather data for Coral Cloud Resort |
-| `Get_Event_Info` | Prompt Template | Retrieves local events in Port Aurelia |
+| `WeatherService` | Apex Class | Provides mock weather data for the resort|
+| `Get_Event_Info` | Prompt Template | Retrieves local events |
 | `Get_Resort_Hours` | Flow | Returns facility hours and reservation requirements |
-| `Coral_Cloud_Agent` | Permission Set | Agent user permissions (Einstein Agent license) |
-| `Coral_Cloud_Admin` | Permission Set | Admin/developer Apex class access |
+| `Resort_Agent` | Permission Set | Agent user permissions (Einstein Agent license) |
+| `Resort_Admin` | Permission Set | Admin/developer Apex class access |
 | `AFDX_Agent_Perms` | Permission Set Group | Bundles agent user permissions for assignment |
 | `AFDX_User_Perms` | Permission Set Group | Bundles admin user permissions for assignment |
 

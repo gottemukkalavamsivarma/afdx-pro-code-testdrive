@@ -118,7 +118,7 @@ Try these prompts to see each type of agent action in action:
 1. [Learn about Agent Script](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-script.html).
 1. Change how the Local Info Agent behaves by editing its Agent Script file.
 1. Right-click inside the agent and select **AFDX: Validate this Agent** to ensure that the Agent Script file is still valid.
-1. Click the **Compile & Restart** button in the Preview Panel to test your changes.
+1. Click the **Compile & Restart** button in the Preview Panel and then ask a question to test your changes.
 
 ## Manual Setup
 

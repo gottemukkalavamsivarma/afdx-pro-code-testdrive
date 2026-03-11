@@ -113,14 +113,12 @@ Try these prompts to see each type of agent action in action:
 - *"I'm interested in movies. What's showing nearby?"* — triggers a Prompt Template action.
 - *"When does the spa open?"* — triggers a Flow action.
 
-Return to `Local_Info_Agent.agent` in the editor and inspect the `local_weather` topic. Notice the pirate-themed instruction at the end of the reasoning block (around line 117). This single line controls how the agent responds — try changing it:
+### Suggested Next Steps
 
-1. Remove the pirate instruction from the Agent Script.
-2. Right-click inside the agent and select **AFDX: Validate this Agent**
-3. Click the **Compile & Restart** button in the Preview Panel to test your changes.
-4. Ask about the weather again — the response should now be in a normal tone.
-
-This demonstrates how Agent Script reasoning instructions directly control agent behavior — no redeployment required.
+1. [Learn about Agent Script](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-script.html).
+1. Change how the Local Info Agent behaves by editing its Agent Script file.
+1. Right-click inside the agent and select **AFDX: Validate this Agent** to ensure that the Agent Script file is still valid.
+1. Click the **Compile & Restart** button in the Preview Panel to test your changes.
 
 ## Manual Setup
 

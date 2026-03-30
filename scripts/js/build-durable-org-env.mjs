@@ -210,7 +210,7 @@ export async function buildDurableOrgEnv() {
   // Redeploy the authoring bundle now that it contains the real agent username.
   tr.addTask(new SfdxTask(
     `Deploy updated authoring bundle`,
-    `sf project deploy start --m AiAuthoringBundle:Local_Info_Agent`,
+    `sf project deploy start -m AiAuthoringBundle:Local_Info_Agent`,
     {suppressErrors: false, renderStdioOnError: true}
   ));
   //*/

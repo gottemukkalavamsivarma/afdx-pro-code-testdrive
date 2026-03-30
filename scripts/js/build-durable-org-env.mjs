@@ -16,21 +16,21 @@
  */
 //─────────────────────────────────────────────────────────────────────────────────────────────────┐
 /**
- * @file          build-org-env.mjs
+ * @file          build-durable-org-env.mjs
  * @author        Vivek M. Chawla <@VivekMChawla> (original 2023)
- * @summary       Implements a series of CLI commands that set up an existing org for this project.
+ * @summary       Implements a series of CLI commands that set up a durable org for this project.
  * @description   Deploys source and configures users and permissions for the AFDX Pro-Code
- *                Testdrive project in an existing org (DE, sandbox, etc.).
+ *                Testdrive project in a durable org (DE, sandbox, etc.).
  * @version       1.0.0
  * @license       Apache-2.0
  */
 //─────────────────────────────────────────────────────────────────────────────────────────────────┘
 // Import External Libraries & Modules
-import { fs }                   from "zx";
+import { $, fs }               from "zx";
 
 // Import Internal Classes & Functions
-import { agentUsername, 
-         agentNickname }        from './setup.mjs';
+import { agentUsername, agentNickname,
+         baselineTag }          from './setup.mjs';
 import { TaskRunner }           from './sfdx-falcon/task-runner/index.mjs';
 import { SfdxTask }             from './sfdx-falcon/task-runner/sfdx-task.mjs';
 import { SfdxFalconError }      from './sfdx-falcon/error/index.mjs';
@@ -40,31 +40,55 @@ import { isDuplicatePermSetAssignment,
                                 from './sfdx-falcon/utilities/sfdx.mjs';
 
 // Set the File Local Debug Namespace
-const dbgNs = 'BuildOrgEnv';
+const dbgNs = 'BuildDurableOrgEnv';
 SfdxFalconDebug.msg(`${dbgNs}`, `Debugging initialized for ${dbgNs}`);
 //─────────────────────────────────────────────────────────────────────────────────────────────────┐
 //─────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 //─────────────────────────────────────────────────────────────────────────────────────────────────┐
 /**
- * @function    buildOrgEnv
+ * @function    buildDurableOrgEnv
  * @returns     {Promise<void>}
- * @summary     Sets up an existing org for the AFDX Pro-Code Testdrive project.
+ * @summary     Sets up a durable org for the AFDX Pro-Code Testdrive project.
  * @description Deploys project source using the manifest, configures permissions,
  *              creates the agent user, and assigns agent permissions.
  * @public
  * @example
  * ```
- * await buildOrgEnv();
+ * await buildDurableOrgEnv();
  * ```
  */
 //─────────────────────────────────────────────────────────────────────────────────────────────────┘
-export async function buildOrgEnv() {
+export async function buildDurableOrgEnv() {
 
   const ctx = {};
   const tr  = TaskRunner.getInstance();
   tr.ctx    = ctx;
 
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Reset all tracked files to the baseline tag before anything else runs.
+  // This guarantees a clean, known state regardless of what the working tree
+  // looks like when the script is invoked.
+  tr.addTask({
+    title: `Reset tracked files to baseline (${baselineTag})`,
+    task: async (ctx, task) => {
+      await $`git checkout ${baselineTag} -- .`;
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Remove any empty directories left over from the baseline reset.
+  tr.addTask({
+    title: `Clean up empty directories`,
+    task: async (ctx, task) => {
+      await $`./clean-files-and-dirs.sh`;
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
   // Assign Prompt Template perm sets before deployment.
@@ -83,6 +107,46 @@ export async function buildOrgEnv() {
   tr.addTask(new SfdxTask(
     `Deploy project source`,
     `sf project deploy start --source-dir force-app`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Assign Space Station permissions to admin user before data import.
+  tr.addTask(new SfdxTask(
+    `Assign "Space_Station_Permset" to admin user`,
+    `sf org assign permset -n Space_Station_Permset`,
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Import space station sample data (stations, resources, supplies).
+  tr.addTask(new SfdxTask(
+    `Import space station sample data`,
+    `sf data import tree --plan data-import/sample-data-plan.json`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Assign Property Management permissions to admin user before data import.
+  tr.addTask(new SfdxTask(
+    `Assign "Property_Management_Access" to admin user`,
+    `sf org assign permset -n Property_Management_Access`,
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Import property manager sample data.
+  tr.addTask(new SfdxTask(
+    `Import property manager sample data`,
+    `sf data import tree --plan data-import/property-manager-data/data-plan.json`,
     {suppressErrors: false, renderStdioOnError: true}
   ));
   //*/
@@ -147,6 +211,19 @@ export async function buildOrgEnv() {
     {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true,
       retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }}
   ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Reset all tracked files back to the baseline tag after setup completes.
+  // This restores files that were modified during setup (e.g. data-import/User.json)
+  // so the repo is left in the same clean state it started in.
+  tr.addTask({
+    title: `Reset files modified during setup to baseline (${baselineTag})`,
+    task: async (ctx, task) => {
+      await $`git checkout ${baselineTag} -- .`;
+    }
+  });
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
 

@@ -26,11 +26,12 @@
  */
 //─────────────────────────────────────────────────────────────────────────────────────────────────┘
 // Import External Libraries & Modules
-import { fs }                   from "zx";
+import { $, fs }               from "zx";
 
 // Import Internal Classes & Functions
-import { agentUsername, alternativeBrowser, deploymentStatusPage, devOrgAlias,
-         devOrgConfigFile }     from './setup.mjs';
+import { agentUsername, alternativeBrowser, baselineTag, deploymentStatusPage,
+         devOrgAlias, devOrgConfigFile }
+                                from './setup.mjs';
 import { TaskRunner }           from './sfdx-falcon/task-runner/index.mjs';
 import { SfdxTask }             from './sfdx-falcon/task-runner/sfdx-task.mjs';
 import { SfdxFalconError }      from './sfdx-falcon/error/index.mjs';
@@ -65,6 +66,30 @@ export async function buildScratchEnv() {
   const tr  = TaskRunner.getInstance();
   tr.ctx    = ctx;
 
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Reset all tracked files to the baseline tag before anything else runs.
+  // This guarantees a clean, known state regardless of what the working tree
+  // looks like when the script is invoked.
+  tr.addTask({
+    title: `Reset tracked files to baseline (${baselineTag})`,
+    task: async (ctx, task) => {
+      await $`git checkout ${baselineTag} -- .`;
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Remove any empty directories left over from the baseline reset.
+  tr.addTask({
+    title: `Clean up empty directories`,
+    task: async (ctx, task) => {
+      await $`./clean-files-and-dirs.sh`;
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
   // Delete the existing scratch org (if present).
@@ -102,7 +127,9 @@ export async function buildScratchEnv() {
   // Open the "Deployment Status" page in the developer's non-default browser.
   tr.addTask(new SfdxTask(
     `Open the Deployment Status page`,
-    `sf org open -b ${alternativeBrowser} -p ${deploymentStatusPage}`,
+    alternativeBrowser
+      ? `sf org open -b ${alternativeBrowser} -p ${deploymentStatusPage}`
+      : `sf org open -p ${deploymentStatusPage}`,
     {suppressErrors: false}
   ));
   //*/
@@ -113,6 +140,46 @@ export async function buildScratchEnv() {
   tr.addTask(new SfdxTask(
     `Deploy project source`,
     `sf project deploy start`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Assign Space Station permissions to admin user before data import.
+  tr.addTask(new SfdxTask(
+    `Assign "Space_Station_Permset" to admin user`,
+    `sf org assign permset -n Space_Station_Permset`,
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Import space station sample data (stations, resources, supplies).
+  tr.addTask(new SfdxTask(
+    `Import space station sample data`,
+    `sf data import tree --plan data-import/sample-data-plan.json`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Assign Property Management permissions to admin user before data import.
+  tr.addTask(new SfdxTask(
+    `Assign "Property_Management_Access" to admin user`,
+    `sf org assign permset -n Property_Management_Access`,
+    {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Import property manager sample data.
+  tr.addTask(new SfdxTask(
+    `Import property manager sample data`,
+    `sf data import tree --plan data-import/property-manager-data/data-plan.json`,
     {suppressErrors: false, renderStdioOnError: true}
   ));
   //*/
@@ -176,6 +243,19 @@ export async function buildScratchEnv() {
     {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true,
       retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }}
   ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Reset all tracked files back to the baseline tag after setup completes.
+  // This restores files that were modified during setup (e.g. data-import/User.json)
+  // so the repo is left in the same clean state it started in.
+  tr.addTask({
+    title: `Reset files modified during setup to baseline (${baselineTag})`,
+    task: async (ctx, task) => {
+      await $`git checkout ${baselineTag} -- .`;
+    }
+  });
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   // Run the tasks.

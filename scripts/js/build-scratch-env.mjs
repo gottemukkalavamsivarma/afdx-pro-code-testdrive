@@ -123,7 +123,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Open the "Deployment Status" page in the developer's non-default browser.
   tr.addTask(new SfdxTask(
     `Open the Deployment Status page`,
@@ -145,7 +145,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Assign Space Station permissions to admin user before data import.
   tr.addTask(new SfdxTask(
     `Assign "Space_Station_Permset" to admin user`,
@@ -155,7 +155,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Import space station sample data (stations, resources, supplies).
   tr.addTask(new SfdxTask(
     `Import space station sample data`,
@@ -165,7 +165,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Assign Property Management permissions to admin user before data import.
   tr.addTask(new SfdxTask(
     `Assign "Property_Management_Access" to admin user`,
@@ -175,7 +175,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Import property manager sample data.
   tr.addTask(new SfdxTask(
     `Import property manager sample data`,
@@ -246,7 +246,7 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Reset all tracked files back to the baseline tag after setup completes.
   // This restores files that were modified during setup (e.g. data-import/User.json)
   // so the repo is left in the same clean state it started in.

@@ -7,7 +7,7 @@
         <name>Local_Info_Agent</name>
     </botMlDomain>
     <botSource>None</botSource>
-    <botUser>afdx-agent@testdrive.org2613e4ae-b9f0-49b2-b231-7befb69e412d</botUser>
+    <botUser>UPDATE_WITH_YOUR_DEFAULT_AGENT_USER</botUser>
     <description>A next-gen agent for Coral Cloud Resort that provides local weather updates, shares information about local events, and helps guests with resort facility hours.</description>
     <label>Local Info Agent</label>
     <logPrivateConversationData>false</logPrivateConversationData>

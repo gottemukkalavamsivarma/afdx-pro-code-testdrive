@@ -138,7 +138,7 @@ export async function buildScratchEnv() {
   //*
   // Deploy project source to the new scratch org.
   tr.addTask(new SfdxTask(
-    `Deploy project source`,
+    `Deploy everything except agent authoring bundles`,
     `sf project deploy start --manifest manifests/EverythingExceptAgents.package.xml`,
     {suppressErrors: false, renderStdioOnError: true}
   ));
@@ -225,40 +225,6 @@ export async function buildScratchEnv() {
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
-  // Replace the placeholder agent user in the Local Info Agent authoring bundle
-  // with the actual agent username so the agent runs under the correct user.
-  tr.addTask({
-    title: `Update Local_Info_Agent default_agent_user (${agentUsername})`,
-    task: async (ctx, task) => {
-      const agentFilePath = 'force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent';
-      const content = fs.readFileSync(agentFilePath, 'utf8');
-      fs.writeFileSync(agentFilePath, content.replace('UPDATE_WITH_YOUR_DEFAULT_AGENT_USER', agentUsername));
-    }
-  });
-  //*/
-  //───────────────────────────────────────────────────────────────────────────────────────────────┘
-  //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
-  // Deploy project source to the new scratch org.
-  tr.addTask(new SfdxTask(
-    `Deploy project source`,
-    `sf project deploy start --manifest manifests/AgentsAndTests.package.xml`,
-    {suppressErrors: false, renderStdioOnError: true}
-  ));
-  //*/
-  //───────────────────────────────────────────────────────────────────────────────────────────────┘
-  //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  /*
-  // Redeploy the authoring bundle now that it contains the real agent username.
-  tr.addTask(new SfdxTask(
-    `Deploy updated authoring bundle`,
-    `sf project deploy start -m AiAuthoringBundle:Local_Info_Agent`,
-    {suppressErrors: false, renderStdioOnError: true}
-  ));
-  //*/
-  //───────────────────────────────────────────────────────────────────────────────────────────────┘
-  //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
   // Assign admin permissions to the current user.
   tr.addTask(new SfdxTask(
     `Assign "AFDX_User_Perms" to admin user`,
@@ -276,6 +242,50 @@ export async function buildScratchEnv() {
     `sf org assign permset -n AFDX_Agent_Perms -b ${agentUsername}`,
     {suppressErrors: isDuplicatePermSetAssignment, renderStdioOnError: true,
       retry: { maxAttempts: 6, delayMs: 10000, retryIf: isPermSetGroupNotUpdated }}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Replace the placeholder agent user in the Local Info Agent authoring bundle
+  // with the actual agent username so the agent runs under the correct user.
+  tr.addTask({
+    title: `Update Local_Info_Agent default_agent_user (${agentUsername})`,
+    task: async (ctx, task) => {
+      const agentFilePath = 'force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent';
+      const content = fs.readFileSync(agentFilePath, 'utf8');
+      fs.writeFileSync(agentFilePath, content.replace('UPDATE_WITH_YOUR_DEFAULT_AGENT_USER', agentUsername));
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Deploy the authoring bundle with the agent user set.
+  tr.addTask(new SfdxTask(
+    `Deploy authoring bundle with agent user set`,
+    `sf project deploy start --manifest manifests/AuthoringBundles.package.xml`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Publish the Local Info Agent.
+  tr.addTask(new SfdxTask(
+    `Publish the Local Info Agent`,
+    `sf agent publish authoring-bundle -n Local_Info_Agent`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Activate the Local Info Agent.
+  tr.addTask(new SfdxTask(
+    `Activate the Local Info Agent`,
+    `sf agent activate -n Local_Info_Agent --version 1`,
+    {suppressErrors: false, renderStdioOnError: true}
   ));
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘

@@ -5,7 +5,7 @@
       "default": true
     }
   ],
-  "name": "afdx-pro-code-testdrive",
+  "name": "tdx26-afdx-demo",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "66.0"

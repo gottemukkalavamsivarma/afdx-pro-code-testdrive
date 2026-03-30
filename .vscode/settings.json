@@ -9,5 +9,12 @@
   "salesforcedx-vscode-slds.basic.invalid": false,
   "salesforcedx-vscode-slds.enabled": false,
   "workbench.editor.pinnedTabsOnSeparateRow": true,
-  "xml.preferences.showSchemaDocumentationType": "none"
+  "xml.preferences.showSchemaDocumentationType": "none",
+  "salesforce.einsteinForDevelopers.advanced": {
+      "sds-model": "Claude-4.5-Sonnet",
+      "trace": { // logs to "trace.md"
+          "request": false,
+          "response": false  
+      },
+  }
 }

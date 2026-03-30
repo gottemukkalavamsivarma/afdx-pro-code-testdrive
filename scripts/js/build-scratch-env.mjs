@@ -139,7 +139,7 @@ export async function buildScratchEnv() {
   // Deploy project source to the new scratch org.
   tr.addTask(new SfdxTask(
     `Deploy project source`,
-    `sf project deploy start`,
+    `sf project deploy start --manifest manifests/EverythingExceptAgents.package.xml`,
     {suppressErrors: false, renderStdioOnError: true}
   ));
   //*/
@@ -230,15 +230,29 @@ export async function buildScratchEnv() {
   tr.addTask({
     title: `Update Local_Info_Agent default_agent_user (${agentUsername})`,
     task: async (ctx, task) => {
+      const placeholder = 'UPDATE_WITH_YOUR_DEFAULT_AGENT_USER';
       const agentFilePath = 'force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent';
-      const content = fs.readFileSync(agentFilePath, 'utf8');
-      fs.writeFileSync(agentFilePath, content.replace('UPDATE_WITH_YOUR_DEFAULT_AGENT_USER', agentUsername));
+      const botFilePath   = 'force-app/main/default/bots/Local_Info_Agent/Local_Info_Agent.bot-meta.xml';
+      const agentContent = fs.readFileSync(agentFilePath, 'utf8');
+      fs.writeFileSync(agentFilePath, agentContent.replace(placeholder, agentUsername));
+      const botContent = fs.readFileSync(botFilePath, 'utf8');
+      fs.writeFileSync(botFilePath, botContent.replace(placeholder, agentUsername));
     }
   });
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
+  // Deploy project source to the new scratch org.
+  tr.addTask(new SfdxTask(
+    `Deploy project source`,
+    `sf project deploy start --manifest manifests/AgentsAndTests.package.xml`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  /*
   // Redeploy the authoring bundle now that it contains the real agent username.
   tr.addTask(new SfdxTask(
     `Deploy updated authoring bundle`,

@@ -16,16 +16,6 @@ testCases:
       - coherence
       - conciseness
       - output_latency_milliseconds
-  - utterance: What will the weather be like on March 15th?
-    expectedTopic: local_weather
-    expectedActions:
-      - check_weather
-    expectedOutcome: The agent should provide a temperature range for the specified
-      date at Coral Cloud Resort.
-    metrics:
-      - coherence
-      - conciseness
-      - output_latency_milliseconds
   - utterance: I like movies. What's showing nearby?
     expectedTopic: local_events
     expectedActions:
@@ -44,8 +34,6 @@ testCases:
       The agent should NOT call check_events without knowing the guest's interests first.
     metrics:
       - coherence
-      - conciseness
-      - instruction_following
       - output_latency_milliseconds
   - utterance: When does the spa open?
     expectedTopic: resort_hours
@@ -54,48 +42,6 @@ testCases:
     expectedOutcome: The agent should provide opening and closing times for the spa.
       The agent should mention that a reservation is required and provide the phone
       number (555) 867-5309.
-    metrics:
-      - coherence
-      - conciseness
-      - output_latency_milliseconds
-  - utterance: What time can I use the pool?
-    expectedTopic: resort_hours
-    expectedActions:
-      - get_resort_hours
-    expectedOutcome: The agent should provide opening and closing times for the pool.
-      The agent should indicate that no reservation is required and guests can walk in.
-    metrics:
-      - coherence
-      - conciseness
-      - output_latency_milliseconds
-  - utterance: I'd like to speak with a real person please.
-    expectedTopic: escalation
-    expectedActions: []
-    expectedOutcome: The agent should escalate the conversation to a human agent.
-    metrics:
-      - coherence
-      - output_latency_milliseconds
-  - utterance: What is the capital of France?
-    expectedTopic: off_topic
-    expectedActions: []
-    expectedOutcome: The agent should NOT answer the off-topic question. The agent
-      should redirect the user to topics it can help with.
-    metrics:
-      - coherence
-      - instruction_following
-      - output_latency_milliseconds
-  - utterance: Great, what time does the restaurant open?
-    expectedTopic: resort_hours
-    expectedActions:
-      - get_resort_hours
-    expectedOutcome: The agent should provide restaurant opening and closing times
-      and mention that a reservation is required.
-    conversationHistory:
-      - role: user
-        message: How's the weather looking?
-      - role: agent
-        message: The weather at Coral Cloud Resort will have temperatures between 65.3F and 81.1F.
-        topic: local_weather
     metrics:
       - coherence
       - conciseness

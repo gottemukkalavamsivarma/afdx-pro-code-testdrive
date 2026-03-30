@@ -2,6 +2,7 @@
 
 This demo showcases the suite of Agentforce DX Pro-Code Developer Tools.
 
+---
 
 ## Preview an Agent Using the CLI
 ```bash
@@ -16,6 +17,8 @@ Read the agentforce-development skill, then preview the local info agent to see 
 sf agent test run --api-name Local_Info_Agent_Test --wait 5
 ```
 
+---
+
 # Other Useful Commands
 
 ## Update Agent Tests
@@ -27,6 +30,7 @@ sf agent test create --api-name Local_Info_Agent_Test --spec specs/Local_Info_Ag
 ```bash
 sf agent test results --job-id xxxxxx --json
 ```
+---
 
 # Demo Management Commands
 
@@ -37,4 +41,8 @@ sf agent test results --job-id xxxxxx --json
 ## Update the `agent` plugin
 ```bash
 sf plugins install agent@latest
+```
+## Get the latest changes and tags
+```bash
+git pull --tags --force
 ```

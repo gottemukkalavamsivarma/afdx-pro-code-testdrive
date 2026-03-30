@@ -112,7 +112,7 @@ export async function buildDurableOrgEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Assign Space Station permissions to admin user before data import.
   tr.addTask(new SfdxTask(
     `Assign "Space_Station_Permset" to admin user`,
@@ -122,7 +122,7 @@ export async function buildDurableOrgEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Import space station sample data (stations, resources, supplies).
   tr.addTask(new SfdxTask(
     `Import space station sample data`,
@@ -132,7 +132,7 @@ export async function buildDurableOrgEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Assign Property Management permissions to admin user before data import.
   tr.addTask(new SfdxTask(
     `Assign "Property_Management_Access" to admin user`,
@@ -142,7 +142,7 @@ export async function buildDurableOrgEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Import property manager sample data.
   tr.addTask(new SfdxTask(
     `Import property manager sample data`,
@@ -193,6 +193,30 @@ export async function buildDurableOrgEnv() {
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
+  // Replace the placeholder agent user in the Local Info Agent authoring bundle
+  // with the actual agent username so the agent runs under the correct user.
+  tr.addTask({
+    title: `Update Local_Info_Agent default_agent_user (${agentUsername})`,
+    task: async (ctx, task) => {
+      const agentFilePath = 'force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent';
+      const content = fs.readFileSync(agentFilePath, 'utf8');
+      fs.writeFileSync(agentFilePath, content.replace('UPDATE_WITH_YOUR_DEFAULT_AGENT_USER', agentUsername));
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Redeploy the authoring bundle now that it contains the real agent username.
+  tr.addTask(new SfdxTask(
+    `Deploy updated authoring bundle`,
+    `sf project deploy start --m AiAuthoringBundle:Local_Info_Agent`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
   // Assign AFDX user permissions to the default user.
   tr.addTask(new SfdxTask(
     `Assign "AFDX_User_Perms" to admin user`,
@@ -214,7 +238,7 @@ export async function buildDurableOrgEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
-  //*
+  /*
   // Reset all tracked files back to the baseline tag after setup completes.
   // This restores files that were modified during setup (e.g. data-import/User.json)
   // so the repo is left in the same clean state it started in.

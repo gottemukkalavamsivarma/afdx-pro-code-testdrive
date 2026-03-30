@@ -225,6 +225,30 @@ export async function buildScratchEnv() {
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
   //*
+  // Replace the placeholder agent user in the Local Info Agent authoring bundle
+  // with the actual agent username so the agent runs under the correct user.
+  tr.addTask({
+    title: `Update Local_Info_Agent default_agent_user (${agentUsername})`,
+    task: async (ctx, task) => {
+      const agentFilePath = 'force-app/main/default/aiAuthoringBundles/Local_Info_Agent/Local_Info_Agent.agent';
+      const content = fs.readFileSync(agentFilePath, 'utf8');
+      fs.writeFileSync(agentFilePath, content.replace('UPDATE_WITH_YOUR_DEFAULT_AGENT_USER', agentUsername));
+    }
+  });
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Redeploy the authoring bundle now that it contains the real agent username.
+  tr.addTask(new SfdxTask(
+    `Deploy updated authoring bundle`,
+    `sf project deploy start --m AiAuthoringBundle:Local_Info_Agent`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
   // Assign admin permissions to the current user.
   tr.addTask(new SfdxTask(
     `Assign "AFDX_User_Perms" to admin user`,

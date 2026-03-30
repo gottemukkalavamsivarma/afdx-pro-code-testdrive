@@ -9,6 +9,9 @@
   "salesforcedx-vscode-slds.basic.invalid": false,
   "salesforcedx-vscode-slds.enabled": false,
   "workbench.editor.pinnedTabsOnSeparateRow": true,
+  "markdown.preview.doubleClickToSwitchToEditor": false,
+  "markdown.preview.scrollEditorWithPreview": false,
+  "markdown.preview.scrollPreviewWithEditor": false,
   "xml.preferences.showSchemaDocumentationType": "none",
   "salesforce.einsteinForDevelopers.advanced": {
       "sds-model": "Claude-4.5-Sonnet",

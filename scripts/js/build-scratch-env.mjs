@@ -290,6 +290,16 @@ export async function buildScratchEnv() {
   //*/
   //───────────────────────────────────────────────────────────────────────────────────────────────┘
   //───────────────────────────────────────────────────────────────────────────────────────────────┐
+  //*
+  // Deploy agent tests.
+  tr.addTask(new SfdxTask(
+    `Deploy agent tests`,
+    `sf project deploy start --manifest manifests/AgentTests.package.xml`,
+    {suppressErrors: false, renderStdioOnError: true}
+  ));
+  //*/
+  //───────────────────────────────────────────────────────────────────────────────────────────────┘
+  //───────────────────────────────────────────────────────────────────────────────────────────────┐
   /*
   // Reset all tracked files back to the baseline tag after setup completes.
   // This restores files that were modified during setup (e.g. data-import/User.json)

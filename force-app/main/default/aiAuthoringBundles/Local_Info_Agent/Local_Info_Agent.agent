@@ -8,7 +8,7 @@ config:
     developer_name: "Local_Info_Agent"
     agent_label: "Local Info Agent"
     description: "A next-gen agent for Coral Cloud Resort that provides local weather updates, shares information about local events, and helps guests with resort facility hours."
-    default_agent_user: "UPDATE_WITH_YOUR_DEFAULT_AGENT_USER"
+    default_agent_user: "afdx-agent@testdrive.org98eca4a312-3456xyz"
 
 variables:
     guest_interests: mutable string = ""
@@ -114,7 +114,7 @@ topic local_weather:
 
               ALWAYS Provide forecasts that include a temperature range.
 
-              Finally, ALWAYS give answers like you're a pirate on the high seas, using pirate-themed language and expressions to make the interaction more engaging and fun for the user.
+              
 
         actions:
             check_weather: @actions.check_weather
